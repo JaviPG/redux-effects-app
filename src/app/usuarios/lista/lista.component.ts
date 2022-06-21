@@ -1,34 +1,42 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { UsuarioService } from '../../services/usuario.service';
 import { Usuario } from '../../models/usuario.model';
 import { Subscription } from 'rxjs';
+import { Store } from '@ngrx/store';
+import { AppState } from 'src/app/store/app.reducers';
+import { cargarUsuarios } from '../../store/actions/usuarios.actions';
 
 @Component({
   selector: 'app-lista',
   templateUrl: './lista.component.html',
-  styles: [
-  ]
+  styles: [],
 })
 export class ListaComponent implements OnInit, OnDestroy {
-
-  public userHttpSub: Subscription;
+  public userSubs: Subscription;
   public users: Usuario[];
+  public isLoading: boolean = false;
+  public error: any;
 
-
-
-  constructor(private userSrv: UsuarioService) { }
+  constructor(private store: Store<AppState>) {}
 
   ngOnInit(): void {
-    this.userHttpSub = this.userSrv.getUsers().subscribe(
-      (users) => {
+    this.userSubs = this.store
+      .select('usuarios')
+      .subscribe(({ users, loading, error }) => {
         this.users = users;
-        console.log('Usuarios:', this.users);
-      }
-    )
+        this.isLoading = loading;
+        this.error = error;
+      });
+
+    this.store.dispatch(cargarUsuarios());
+    // this.userHttpSub = this.userSrv.getUsers().subscribe(
+    //   (users) => {
+    //     this.users = users;
+    //     console.log('Usuarios:', this.users);
+    //   }
+    // )
   }
 
   ngOnDestroy(): void {
-      this.userHttpSub?.unsubscribe();
+    this.userSubs?.unsubscribe();
   }
-
 }
